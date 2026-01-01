@@ -1,0 +1,75 @@
+import express from "express";
+import cors from "cors";
+import fetch from "node-fetch";
+
+const app = express();
+const PORT = 5000;
+
+// config
+const OLLAMA_URL = "http://127.0.0.1:11434/api/generate";
+const MODEL = "phi3:mini";
+
+app.use(cors());
+app.use(express.json());
+
+//  check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+//  endpoint
+app.post("/ask", async (req, res) => {
+  const { question } = req.body;
+
+  if (!question) {
+    return res.json({ reply: "Please ask something." });
+  }
+
+  // SYSTEM PROMPT 
+  const prompt = `
+You are an AI Company Assistant representing a technology company.
+
+RULES:
+- You represent the COMPANY, not yourself
+- Never say "I am an AI"
+- Speak as "we" or "our company"
+- Answer ALL normal questions fully
+- Be friendly and human-like
+
+Company Info:
+We build AI-powered assistants, automation tools, and internal knowledge systems.
+Our mission is to help people and businesses work smarter using AI.
+
+User: ${question}
+Assistant:
+`;
+
+  try {
+    const response = await fetch(OLLAMA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: MODEL,
+        prompt,
+        stream: false
+      })
+    });
+
+    const data = await response.json();
+
+    res.json({
+      reply: data.response?.trim() || "No response from model."
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      reply: "Error connecting to AI model."
+    });
+  }
+});
+
+//  server
+app.listen(PORT, "127.0.0.1", () => {
+  console.log(`✅ Server running on http://127.0.0.1:${PORT}`);
+});
