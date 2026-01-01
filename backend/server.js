@@ -3,7 +3,9 @@ import cors from "cors";
 import fetch from "node-fetch";
 
 const app = express();
-const PORT = 5000;
+
+// ✅ REQUIRED FOR RENDER
+const PORT = process.env.PORT || 5000;
 
 // config
 const OLLAMA_URL = "http://127.0.0.1:11434/api/generate";
@@ -12,12 +14,12 @@ const MODEL = "phi3:mini";
 app.use(cors());
 app.use(express.json());
 
-//  check
+// health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-//  endpoint
+// main endpoint
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
 
@@ -25,7 +27,6 @@ app.post("/ask", async (req, res) => {
     return res.json({ reply: "Please ask something." });
   }
 
-  // SYSTEM PROMPT 
   const prompt = `
 You are an AI Company Assistant representing a technology company.
 
@@ -33,8 +34,7 @@ RULES:
 - You represent the COMPANY, not yourself
 - Never say "I am an AI"
 - Speak as "we" or "our company"
-- Answer ALL normal questions fully
-- Be friendly and human-like
+- Be friendly and professional
 
 Company Info:
 We build AI-powered assistants, automation tools, and internal knowledge systems.
@@ -64,12 +64,12 @@ Assistant:
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      reply: "Error connecting to AI model."
+      reply: "AI service is currently unavailable."
     });
   }
 });
 
-//  server
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(`✅ Server running on http://127.0.0.1:${PORT}`);
+// ✅ THIS IS THE MOST IMPORTANT PART
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
