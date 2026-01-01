@@ -13,6 +13,10 @@ const MODEL = "phi3:mini";
 
 app.use(cors());
 app.use(express.json());
+app.get("/", (req, res) => {
+  res.send("AI Company Assistant is running 🚀");
+});
+
 
 // health check
 app.get("/health", (req, res) => {
