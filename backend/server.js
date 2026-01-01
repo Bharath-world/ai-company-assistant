@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 
 const app = express();
 
-// ✅ REQUIRED FOR RENDER
+// ✅ Render requires this
 const PORT = process.env.PORT || 5000;
 
 // config
@@ -13,17 +13,18 @@ const MODEL = "phi3:mini";
 
 app.use(cors());
 app.use(express.json());
+
+// ✅ ROOT ROUTE (THIS FIXES Cannot GET /)
 app.get("/", (req, res) => {
   res.send("AI Company Assistant is running 🚀");
 });
 
-
-// health check
+// health
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// main endpoint
+// ask endpoint
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
 
@@ -35,14 +36,13 @@ app.post("/ask", async (req, res) => {
 You are an AI Company Assistant representing a technology company.
 
 RULES:
-- You represent the COMPANY, not yourself
+- You represent the COMPANY
 - Never say "I am an AI"
-- Speak as "we" or "our company"
-- Be friendly and professional
+- Speak as "we"
+- Answer fully and clearly
 
 Company Info:
 We build AI-powered assistants, automation tools, and internal knowledge systems.
-Our mission is to help people and businesses work smarter using AI.
 
 User: ${question}
 Assistant:
@@ -55,25 +55,19 @@ Assistant:
       body: JSON.stringify({
         model: MODEL,
         prompt,
-        stream: false
-      })
+        stream: false,
+      }),
     });
 
     const data = await response.json();
+    res.json({ reply: data.response?.trim() || "No response." });
 
-    res.json({
-      reply: data.response?.trim() || "No response from model."
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      reply: "AI service is currently unavailable."
-    });
+  } catch (err) {
+    res.status(500).json({ reply: "AI backend not available." });
   }
 });
 
-// ✅ THIS IS THE MOST IMPORTANT PART
+// ✅ MOST IMPORTANT LINE
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
